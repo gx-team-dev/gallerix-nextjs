@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     // const key = `${randomUUID()}-${safeName}`;
 
      // Gräns: använd enkel PUT för mindre filer, multipart för större
-    const MULTIPART_THRESHOLD = 1 * 1024 * 1024; // 8 MB (min 5 MB per del för S3)
+    const MULTIPART_THRESHOLD = 5 * 1024 * 1024; // 8 MB (min 5 MB per del för S3)
 
     if(fileSize && fileSize <= MULTIPART_THRESHOLD) {
       // Konvertera web ReadableStream -> Node Readable (Node 18+)
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
           ContentType: contentType,
         },
         queueSize: 3,
-        partSize: 1 * 1024 * 1024, // ≥ 5 MB
+        partSize: 5 * 1024 * 1024, // ≥ 5 MB
         leavePartsOnError: false,
       });
       await uploader.done();
