@@ -57,7 +57,7 @@ export async function POST(req: Request) {
           ContentType: contentType,
         },
         queueSize: 3,
-        partSize: 8 * 1024 * 1024, // ≥ 5 MB
+        partSize: 1 * 1024 * 1024, // ≥ 5 MB
         leavePartsOnError: false,
       });
       await uploader.done();
