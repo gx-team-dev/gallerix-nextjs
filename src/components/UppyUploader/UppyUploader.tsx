@@ -105,8 +105,16 @@ export default function UppyUploader({
     uppy.on("complete", () => onComplete?.())
 
     return () => {
-      // Stäng ner allt rent vid unmount
-      uppy.close({ reason: "unmount" });
+      // Stop any inflight uploads and clear files/state (cast to any to avoid type conflicts)
+      ;(uppy as any).cancelAll?.()
+      ;(uppy as any).reset?.()
+
+      // If you need to close the Dashboard UI plugin explicitly, call it on the plugin (cast to any)
+      const dashboard = (uppy as any).getPlugin?.("Dashboard") as any
+      dashboard?.close?.()
+
+      // Optionally destroy the uppy instance if you created it manually elsewhere:
+      ;(uppy as any).close?.({ reason: "unmount" })
     }
   }, [uppy, note, height, onFileUploaded, onComplete])
 
