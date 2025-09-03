@@ -1,79 +1,109 @@
-// components/UppyUploader.tsx
-"use client";
+"use client"
 
-import { useEffect, useRef, useState } from "react";
-import Uppy from "@uppy/core";
-import { Dashboard } from "@uppy/react";
-import XHRUpload from "@uppy/xhr-upload";
+import { useEffect, useMemo, useRef } from "react"
+import Uppy from "@uppy/core"
+import Dashboard from "@uppy/dashboard"
+import AwsS3 from "@uppy/aws-s3"
+import "../../../node_modules/@uppy/core/dist/style.css"
+import "../../../node_modules/@uppy/dashboard/dist/style.css"
 
-import "../../../node_modules/@uppy/core/dist/style.min.css";
-import "../../../node_modules/@uppy/dashboard/dist/style.min.css";
+type PresignResponse = {
+  method: "PUT"
+  url: string
+  headers: Record<string, string>
+  key: string
+  publicUrl: string
+}
 
-export default function UppyUploader() {
-  const uppyRef = useRef<Uppy | null>(null);
-  const [lastUrl, setLastUrl] = useState<string | null>(null);
+export type UploadedFile = { name: string; url: string; key: string }
 
-  if (!uppyRef.current) {
-    uppyRef.current = new Uppy({
-      autoProceed: false,
-      restrictions: {
-        maxNumberOfFiles: 1,
-        maxFileSize: 20 * 1024 * 1024, // 20 MB demo
-      },
+type UppyUploaderProps = {
+  maxNumberOfFiles?: number
+  allowedFileTypes?: string[] | null
+  note?: string
+  onFileUploaded?: (file: UploadedFile) => void
+  onComplete?: () => void
+  height?: number
+}
+
+export default function UppyUploader({
+  maxNumberOfFiles = 5,
+  allowedFileTypes = null,
+  note = "Ladda upp filer direkt till DigitalOcean Spaces",
+  onFileUploaded,
+  onComplete,
+  height = 360,
+}: UppyUploaderProps) {
+  const dashRef = useRef<HTMLDivElement | null>(null)
+
+  const uppy = useMemo(
+    () =>
+      new Uppy({
+        restrictions: {
+          maxNumberOfFiles,
+          allowedFileTypes: allowedFileTypes || undefined,
+        },
+        autoProceed: false,
+      }),
+    [maxNumberOfFiles, allowedFileTypes]
+  )
+
+  useEffect(() => {
+    if (!dashRef.current) return
+
+    // Dashboard-plugin
+    uppy.use(Dashboard, {
+      inline: true,
+      target: dashRef.current,
+      proudlyDisplayPoweredByUppy: false,
+      showRemoveButtonAfterComplete: true,
+      height,
+      note,
     });
 
-    // Skicka filen till vår server, som i sin tur laddar upp till B2
-    uppyRef.current.use(XHRUpload, {
-      endpoint: "/api/upload",
-      method: "POST",
-      formData: true,
-      fieldName: "file", // ska matcha servern
-      bundle: false,
-      getResponseData: (xhr: XMLHttpRequest) => {
-        try {
-          return JSON.parse(xhr.responseText);
-        } catch {
-          return {};
+    // AwsS3 med presign per fil (en call per fil)
+    (uppy as any).use(AwsS3, {
+      async getUploadParameters(file: any) {
+        const res = await fetch("/api/s3-presign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type || "application/octet-stream",
+          }),
+        })
+        if (!res.ok) throw new Error("Kunde inte få presigned URL")
+        const data: PresignResponse = await res.json()
+
+        // Lägg publicUrl/nyckel på filens meta för senare användning
+        uppy.setFileMeta(file.id, { _publicUrl: data.publicUrl, _key: data.key })
+
+        return {
+          method: data.method,
+          url: data.url,
+          headers: data.headers,
         }
       },
     });
 
-    uppyRef.current.on("upload-success", (file: any, response: any) => {
-      const url = response?.body?.publicUrl || null;
-      setLastUrl(url);
-    });
+    // Event: en fil klar
+    uppy.on("upload-success", (file) => {
+      if(!file) return;
+      const url = (file.meta as any)._publicUrl
+      const key = (file.meta as any)._key
+      if (typeof url === "string" && typeof key === "string") {
+        onFileUploaded?.({ name: file.name, url, key })
+      }
+    })
 
-    uppyRef.current.on("error", (err:any) => {
-      console.error("Uppy error:", err);
-      alert(`Fel: ${String(err)}`);
-    });
-  }
+    // Event: alla klara
+    uppy.on("complete", () => onComplete?.())
 
-  useEffect(() => {
     return () => {
-      // Cleanup
-      const uppy = uppyRef.current;
-      if (!uppy) return;
-      (uppy as any).cancelAll?.();
-      (uppy as any).reset?.();
-      uppyRef.current = null;
-    };
-  }, []);
+      // Stäng ner allt rent vid unmount
+      uppy.close({ reason: "unmount" })
+    }
+  }, [uppy, note, height, onFileUploaded, onComplete])
 
-  return (
-    <div className="max-w-xl">
-      <Dashboard
-        uppy={uppyRef.current}
-        proudlyDisplayPoweredByUppy={false}
-        width="100%"
-        height={360}
-        note="Max 20 MB" 
-      />
-      {lastUrl && (
-        <p style={{ marginTop: 12, wordBreak: "break-all" }}>
-          Klart! Publik URL: <a href={lastUrl} target="_blank" rel="noreferrer">{lastUrl}</a>
-        </p>
-      )}
-    </div>
-  );
+  return <div ref={dashRef} />
 }
