@@ -21,7 +21,7 @@ type UppyUploaderProps = {
   maxNumberOfFiles?: number
   allowedFileTypes?: string[] | null
   note?: string
-  onFileUploaded?: (file: UploadedFile) => void
+  onFileUploaded?: (file: any) => void
   onComplete?: () => void
   height?: number
 }
@@ -88,10 +88,15 @@ export default function UppyUploader({
 
     // Event: en fil klar
     uppy.on("upload-success", (file) => {
-      if(!file) return;
-      const url = (file.meta as any)._publicUrl
-      const key = (file.meta as any)._key
-      if (typeof url === "string" && typeof key === "string") {
+      if (!file) return
+
+      const rawUrl = (file.meta as any)._publicUrl
+      const rawKey = (file.meta as any)._key
+
+      // runtime guard -> now we can assign to definite string types
+      if (typeof rawUrl === "string" && typeof rawKey === "string") {
+        const url: string = rawUrl
+        const key: string = rawKey
         onFileUploaded?.({ name: file.name, url, key })
       }
     })
@@ -101,7 +106,7 @@ export default function UppyUploader({
 
     return () => {
       // Stäng ner allt rent vid unmount
-      uppy.close({ reason: "unmount" })
+      uppy.close({ reason: "unmount" });
     }
   }, [uppy, note, height, onFileUploaded, onComplete])
 
