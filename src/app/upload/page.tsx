@@ -5,6 +5,7 @@ import UppyUploader from "@/components/UppyUploader/UppyUploader";
 import { IoCloudUploadOutline } from "react-icons/io5";
 import { CgSpinner } from "react-icons/cg";
 import { useState } from "react";
+import path from "path";
 
 
 export default function Page() {
@@ -19,10 +20,12 @@ export default function Page() {
 
     const datePrefix = new Date().toISOString().slice(0, 10);
 
+    const imgPath = path.join(process.cwd(), 'public', 'temp/IMG_4601.JPG');
+
     const res = await fetch('/api/upload-spaces', {
       method: 'POST',
       body: JSON.stringify({
-        filePath: './public/temp/IMG_4601.JPG', // Ändra till en giltig sökväg på din server
+        filePath: imgPath,
         key: `test/${datePrefix}.jpg`, // Var filen ska hamna i bucketen
         acl: 'private' // eller 'public-read' om du vill att filen ska vara publikt åtkomlig
       }),
