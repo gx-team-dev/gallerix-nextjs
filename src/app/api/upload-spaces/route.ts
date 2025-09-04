@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   try {
     const { filePath, key, acl } = await req.json();
 
-    const imgPath = path.join(process.cwd(), '/public', filePath);
+    const imgPath = path.join(process.cwd(), '/app', filePath);
 
     console.log("Data:", { filePath, key, acl });
 

@@ -22,7 +22,7 @@ export default function Page() {
     const res = await fetch('/api/upload-spaces', {
       method: 'POST',
       body: JSON.stringify({
-        filePath: 'temp/IMG_4601.JPG',
+        filePath: 'IMG_4601.JPG',
         key: `test/${datePrefix}.jpg`, // Var filen ska hamna i bucketen
         acl: 'private' // eller 'public-read' om du vill att filen ska vara publikt åtkomlig
       }),
