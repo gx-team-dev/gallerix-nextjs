@@ -11,9 +11,9 @@ export async function POST(req: Request) {
   try {
     const { filePath, key, acl } = await req.json();
 
-    const imgPath = path.join(process.cwd(), '/app', filePath);
+    const imgPath = path.join(process.cwd(), '/public/temp', filePath);
 
-    console.log("Data:", { filePath, key, acl });
+    console.log("Data:", { imgPath, key, acl });
 
     if (!filePath || !key) {
       return NextResponse.json(
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const absPath = resolve(filePath);
+    const absPath = resolve(imgPath);
     const stats = statSync(absPath);
     if (!stats.isFile()) {
       return NextResponse.json(
