@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import UppyUploader from "@/components/UppyUploader/UppyUploader";
 import { IoCloudUploadOutline } from "react-icons/io5";
 import { CgSpinner } from "react-icons/cg";
+import { MdOutlineFindInPage } from "react-icons/md";
 import { useState } from "react";
-import path from "path";
-
 
 export default function Page() {
 
@@ -20,12 +19,10 @@ export default function Page() {
 
     const datePrefix = new Date().toISOString().slice(0, 10);
 
-    const imgPath = path.join(process.cwd(), 'public', 'temp/IMG_4601.JPG');
-
     const res = await fetch('/api/upload-spaces', {
       method: 'POST',
       body: JSON.stringify({
-        filePath: imgPath,
+        filePath: 'temp/IMG_4601.JPG',
         key: `test/${datePrefix}.jpg`, // Var filen ska hamna i bucketen
         acl: 'private' // eller 'public-read' om du vill att filen ska vara publikt åtkomlig
       }),
@@ -39,12 +36,26 @@ export default function Page() {
     setIsLoading(false);
   };
 
+  const handleFetchFile = async () => {
+    setIsLoading(true);
+    const res = await fetch('/api/file');
+    const blob = await res.blob();
+    console.log('Fetched file response:', res);
+    console.log('Fetched file blob:', blob);
+    setIsLoading(false);
+  };
+
   return (
     <main style={{ padding: 24 }}>
       <h1>Upload to DO</h1>
       <UppyUploader />
 
-      <Button className="mt-4" onClick={handleUploadButtonClick}>{isLoading ? <CgSpinner className="animate-spin" /> : <IoCloudUploadOutline size={25} />}</Button>
+      <div className="flex gap-2 mt-4">
+        <Button onClick={handleUploadButtonClick}>{isLoading ? <CgSpinner className="animate-spin" /> : <IoCloudUploadOutline size={25} />}</Button>
+
+        <Button onClick={handleFetchFile}>{isLoading ? <CgSpinner className="animate-spin" /> : <MdOutlineFindInPage  size={25} />}</Button>
+      </div>
+    
     </main>
   );
 }

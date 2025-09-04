@@ -5,12 +5,15 @@ import { s3 } from "@/lib/s3";
 import { createReadStream, statSync } from "fs";
 import { resolve } from "path";
 import mime from "mime";
+import path from "path";
 
 export async function POST(req: Request) {
   try {
     const { filePath, key, acl } = await req.json();
 
-    console.log("Received upload request:", { filePath, key, acl });
+    const imgPath = path.join(process.cwd(), '/public', filePath);
+
+    console.log("Data:", { filePath, key, acl });
 
     if (!filePath || !key) {
       return NextResponse.json(
