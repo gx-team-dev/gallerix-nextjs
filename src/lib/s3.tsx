@@ -7,11 +7,11 @@ const required = (name: string, v?: string) => {
 };
 
 export const s3 = new S3Client({
-  region: required("BACKBLAZE_S3_REGION", process.env.BACKBLAZE_S3_REGION),
-  endpoint: required("BACKBLAZE_S3_ENDPOINT", process.env.BACKBLAZE_S3_ENDPOINT),
+  region: process.env.DO_SPACES_REGION!,
+  endpoint: process.env.DO_SPACES_ENDPOINT!, // DO Spaces kräver custom endpoint
+  forcePathStyle: false, // DO Spaces funkar bäst utan path-style
   credentials: {
-    accessKeyId: required("BACKBLAZE_S3_KEY_ID", process.env.BACKBLAZE_S3_KEY_ID),
-    secretAccessKey: required("BACKBLAZE_S3_APP_KEY", process.env.BACKBLAZE_S3_APP_KEY),
+    accessKeyId: process.env.DO_SPACES_KEY!,
+    secretAccessKey: process.env.DO_SPACES_SECRET!,
   },
-  // forcePathStyle: true, // slå på om din miljö kräver path-style
 });

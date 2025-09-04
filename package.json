@@ -19,6 +19,7 @@
     "@uppy/xhr-upload": "^5.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "mime": "^4.0.7",
     "next": "15.5.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
